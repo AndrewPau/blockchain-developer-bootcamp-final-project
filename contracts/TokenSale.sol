@@ -7,6 +7,8 @@ contract TokenSale {
 
     address owner;
     uint256 startingPrice;
+    uint256 purchaseLimit;
+    mapping (address => bool) previousBuyers;
 
     modifier isOwner() {
         require(msg.sender == owner);
@@ -28,9 +30,10 @@ contract TokenSale {
         // Calculate refund amount, if applicable
     }
 
-    constructor(uint32 _startingPrice) {
+    constructor(uint256 _startingPrice, uint256 _purchaseLimit) {
         owner = msg.sender;
         startingPrice = _startingPrice;
+        purchaseLimit = _purchaseLimit;
     }
 
     function purchasePresaleToken(uint32 amount) public payable presaleQualified {

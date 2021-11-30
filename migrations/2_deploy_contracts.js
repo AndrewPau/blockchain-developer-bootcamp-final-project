@@ -1,7 +1,5 @@
-var TokenGeneration = artifacts.require("TokenGeneration")
-var TokenSale = artifacts.require("TokenSale")
+var PauToken = artifacts.require("PauToken")
 
 module.exports = function(deployer) {
-    // deployer.deploy(TokenGeneration)
-    deployer.deploy(TokenSale, 1000000, 10, 1000000)
+    deployer.deploy(PauToken, 1000000)
 }

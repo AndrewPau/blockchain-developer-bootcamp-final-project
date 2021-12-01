@@ -2,13 +2,13 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract PauToken is ERC20 {
+contract PauToken is ERC20, Ownable {
 
     event PurchaseToken(address indexed addr, uint256 amount);
     event WithdrawFunds(address indexed addr, uint256 amount);
 
-    address public owner;
     uint256 public startingPrice;
     uint256 public purchaseLimit;
 
@@ -18,11 +18,6 @@ contract PauToken is ERC20 {
 
     receive () external payable {
       revert();
-    }
-
-    modifier isOwner() {
-        require(msg.sender == owner, "not owner");
-        _;
     }
 
     modifier withdrawFunds() {
@@ -48,7 +43,6 @@ contract PauToken is ERC20 {
     }
 
     constructor(uint256 initialSupply) ERC20("Pau Token", "PAU") {
-        owner = msg.sender;
         _mint(address(this), initialSupply * 10 ** decimals());
         startingPrice = 10 ** (decimals()-2);
         purchaseLimit = 20;
@@ -63,7 +57,7 @@ contract PauToken is ERC20 {
         return true;
     }
 
-    function withdraw() public isOwner withdrawFunds returns (bool) {
+    function withdraw() public onlyOwner withdrawFunds returns (bool) {
         uint256 balance = address(this).balance;
         (bool success, ) = msg.sender.call{value: balance}("");
         require(success, "Transfer failed.");

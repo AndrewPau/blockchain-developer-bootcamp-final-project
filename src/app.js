@@ -8,7 +8,8 @@ const purchaseButton = this.document.getElementById("purchase-token");
 const purchaseQuantity = this.document.getElementById("purchase-quantity");
 const withdrawButton = this.document.getElementById("withdraw-funds");
 
-var contractAddress = '0xBbf25fC22864132c1c029A4B01D8015c7309F212';
+// TODO: Toggle address if testing locally
+var contractAddress = '0xc617C0EA609f5cbFFdDeCdB983B834E47DD83159';
 var abi = [
   {
     "inputs": [
@@ -44,6 +45,25 @@ var abi = [
       }
     ],
     "name": "Approval",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "previousOwner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "OwnershipTransferred",
     "type": "event"
   },
   {
@@ -98,6 +118,12 @@ var abi = [
         "internalType": "address",
         "name": "addr",
         "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
       }
     ],
     "name": "WithdrawFunds",
@@ -276,6 +302,13 @@ var abi = [
   },
   {
     "inputs": [],
+    "name": "renounceOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "startingPrice",
     "outputs": [
       {
@@ -367,6 +400,19 @@ var abi = [
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "transferOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "stateMutability": "payable",
     "type": "receive"
   },
@@ -412,7 +458,6 @@ window.addEventListener('load', function() {
         web3 = new Web3(window.ethereum);
         contract = new web3.eth.Contract(abi, contractAddress);
         contract.setProvider(window.ethereum);
-        //contract.setProvider("ws://localhost:9545")
     } else {
         mmDetected.innerHTML = "Metamask not found!";
         mmConnect.disabled = true;
@@ -437,7 +482,6 @@ mmConnect.onclick = async () => {
   mmBalance.innerHTML = `balance: ${etherBalance} ETH`;
 
   owner = await contract.methods.owner().call();
-  console.log(owner);
 
   if (owner.toLowerCase() == address.toLowerCase()) {
     withdrawButton.hidden = false;
@@ -455,32 +499,38 @@ mmConnect.onclick = async () => {
 purchaseButton.onclick = async() => {
   quantity = purchaseQuantity.value
   pricePerToken = await contract.methods.startingPrice().call();
-  let resp = await contract.methods.purchaseToken(quantity).send(
+  let purchaseResult = this.document.getElementById("purchase-result");
+  contract.methods.purchaseToken(quantity).send(
       {
           from: address,
           to: contractAddress,
           value: quantity * pricePerToken,
       }
-  )
-  console.log(resp)
-  updateRemainingSupply();
-  let purchaseResult = this.document.getElementById("purchase-result");
-  if (resp.status) {
-    purchaseResult.innerHTML = `Successfully purchased ${quantity} token(s)!`;
-  } else {
-    purchaseResult.innerHTML = 'Purchase failed';
-  }
+  ).then(function(resp){
+    updateRemainingSupply();
+    if (resp.status) {
+      purchaseResult.innerHTML = `Successfully purchased ${quantity} token(s)!`;
+    } else {
+      purchaseResult.innerHTML = 'Purchase failed';
+    }
+  });
+  purchaseResult.innerHTML = "Purchase in progress...";
 }
 
 withdrawButton.onclick = async() => {
   let withdrawResult = this.document.getElementById("withdraw-result");
-  try {
-    let resp = await contract.methods.withdraw().call();
-    withdrawResult.innerHTML = `Successfully withdrew funds!`;
+  contract.methods.withdraw().send(
+      {
+        from: address,
+      }
+  ).then(function(resp){
     console.log(resp);
-  } catch(err) {
+    withdrawResult.innerHTML = `Successfully withdrew funds!`;
+  }).catch(function(err){
+    console.log(err);
     withdrawResult.innerHTML = 'Withdrawal failed';
-  }
+  });
+  withdrawResult.innerHTML = `Withdrawal in progress...`;
 }
 
 async function updateRemainingSupply() {

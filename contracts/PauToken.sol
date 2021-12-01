@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 contract PauToken is ERC20 {
 
     event PurchaseToken(address indexed addr, uint256 amount);
-    event WithdrawFunds(address indexed addr);
+    event WithdrawFunds(address indexed addr, uint256 amount);
 
     address public owner;
     uint256 public startingPrice;
@@ -63,10 +63,12 @@ contract PauToken is ERC20 {
         return true;
     }
 
-    // function withdraw() public isOwner withdrawFunds {
-    //     (bool sent,) = msg.sender.call{value: address(this).balance}("");
-    //     require(sent, "Withdraw failed");
+    function withdraw() public isOwner withdrawFunds returns (bool) {
+        uint256 balance = address(this).balance;
+        (bool success, ) = msg.sender.call{value: balance}("");
+        require(success, "Transfer failed.");
 
-    //     emit WithdrawFunds(msg.sender);
-    // }
+        emit WithdrawFunds(msg.sender, balance);
+        return true;
+    }
 }

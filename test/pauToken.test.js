@@ -47,6 +47,30 @@ contract("PauToken", function (accounts) {
         );
     });
 
+    it("should emit a WithdrawFunds event when tokens are withdrew", async () => {
+        let eventEmitted = false;
+        const _ = await instance.purchaseToken(1, { from: alice, value: price });
+        const tx = await instance.withdraw({ from: contractOwner});
+  
+        if (tx.logs[0].event == "WithdrawFunds") {
+          eventEmitted = true;
+        }
+  
+        assert.equal(
+          eventEmitted,
+          true,
+          "withdrawing should emit a WithdrawFunds event",
+        );
+    });
+
+    it("should error when someone other than the owner tries to withdraw funds", async () => {
+        await catchRevert(instance.withdraw({ from: alice}));
+    });
+
+    it("should error when no funds are available to withdraw", async () => {
+        await catchRevert(instance.withdraw({ from: contractOwner}));
+    });
+
     it("should error when not enough value is sent when purchasing tokens", async () => {
         await catchRevert(instance.purchaseToken(1, { from: alice, value: price - 100 }));
     });

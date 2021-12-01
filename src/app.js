@@ -6,6 +6,7 @@ const mmConnect = this.document.getElementById("mm-connect");
 const remainingSupply = this.document.getElementById("remaining-supply");
 const purchaseButton = this.document.getElementById("purchase-token");
 const purchaseQuantity = this.document.getElementById("purchase-quantity");
+const withdrawButton = this.document.getElementById("withdraw-funds");
 
 var contractAddress = '0xBbf25fC22864132c1c029A4B01D8015c7309F212';
 var abi = [
@@ -104,22 +105,7 @@ var abi = [
   },
   {
     "stateMutability": "payable",
-    "type": "fallback",
-    "payable": true
-  },
-  {
-    "inputs": [],
-    "name": "_totalSupply",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function",
-    "constant": true
+    "type": "fallback"
   },
   {
     "inputs": [
@@ -143,8 +129,7 @@ var abi = [
       }
     ],
     "stateMutability": "view",
-    "type": "function",
-    "constant": true
+    "type": "function"
   },
   {
     "inputs": [
@@ -187,8 +172,7 @@ var abi = [
       }
     ],
     "stateMutability": "view",
-    "type": "function",
-    "constant": true
+    "type": "function"
   },
   {
     "inputs": [],
@@ -201,8 +185,7 @@ var abi = [
       }
     ],
     "stateMutability": "view",
-    "type": "function",
-    "constant": true
+    "type": "function"
   },
   {
     "inputs": [
@@ -263,8 +246,7 @@ var abi = [
       }
     ],
     "stateMutability": "view",
-    "type": "function",
-    "constant": true
+    "type": "function"
   },
   {
     "inputs": [],
@@ -277,8 +259,7 @@ var abi = [
       }
     ],
     "stateMutability": "view",
-    "type": "function",
-    "constant": true
+    "type": "function"
   },
   {
     "inputs": [],
@@ -291,22 +272,7 @@ var abi = [
       }
     ],
     "stateMutability": "view",
-    "type": "function",
-    "constant": true
-  },
-  {
-    "inputs": [],
-    "name": "remainingSupply",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function",
-    "constant": true
+    "type": "function"
   },
   {
     "inputs": [],
@@ -319,8 +285,7 @@ var abi = [
       }
     ],
     "stateMutability": "view",
-    "type": "function",
-    "constant": true
+    "type": "function"
   },
   {
     "inputs": [],
@@ -333,8 +298,7 @@ var abi = [
       }
     ],
     "stateMutability": "view",
-    "type": "function",
-    "constant": true
+    "type": "function"
   },
   {
     "inputs": [],
@@ -347,8 +311,7 @@ var abi = [
       }
     ],
     "stateMutability": "view",
-    "type": "function",
-    "constant": true
+    "type": "function"
   },
   {
     "inputs": [
@@ -405,8 +368,7 @@ var abi = [
   },
   {
     "stateMutability": "payable",
-    "type": "receive",
-    "payable": true
+    "type": "receive"
   },
   {
     "inputs": [
@@ -425,13 +387,18 @@ var abi = [
       }
     ],
     "stateMutability": "payable",
-    "type": "function",
-    "payable": true
+    "type": "function"
   },
   {
     "inputs": [],
     "name": "withdraw",
-    "outputs": [],
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "function"
   }
@@ -453,50 +420,68 @@ window.addEventListener('load', function() {
 });
 
 mmConnect.onclick = async () => {
-    await ethereum.request({ 
-        method: 'eth_requestAccounts'
-    });
-    let mmAddress = this.document.getElementById("mm-address")
-    let addressPromise = await ethereum.request({ method: 'eth_accounts'})
-    address = addressPromise[0]
-    mmAddress.innerHTML = "address: " + address
+  await ethereum.request({ 
+      method: 'eth_requestAccounts'
+  });
+  let mmAddress = this.document.getElementById("mm-address")
+  let addressPromise = await ethereum.request({ method: 'eth_accounts'})
+  address = addressPromise[0]
+  mmAddress.innerHTML = "address: " + address
 
-    let mmBalance = this.document.getElementById("mm-balance")
-    let balance = await ethereum.request({
-        method: 'eth_getBalance', 
-        params: [address],
-    });
-    etherBalance = web3.utils.fromWei(balance);
-    mmBalance.innerHTML = `balance: ${etherBalance} ETH`;
+  let mmBalance = this.document.getElementById("mm-balance")
+  let balance = await ethereum.request({
+      method: 'eth_getBalance', 
+      params: [address],
+  });
+  etherBalance = web3.utils.fromWei(balance);
+  mmBalance.innerHTML = `balance: ${etherBalance} ETH`;
 
-    purchaseButton.hidden = false;
-    purchaseButton.disabled = false;
-    purchaseQuantity.hidden = false;
-    purchaseQuantity.disabled = false;
+  owner = await contract.methods.owner().call();
+  console.log(owner);
 
-    updateRemainingSupply();
+  if (owner.toLowerCase() == address.toLowerCase()) {
+    withdrawButton.hidden = false;
+    withdrawButton.disabled = false;
+  }
+
+  purchaseButton.hidden = false;
+  purchaseButton.disabled = false;
+  purchaseQuantity.hidden = false;
+  purchaseQuantity.disabled = false;
+
+  updateRemainingSupply();
 }
 
 purchaseButton.onclick = async() => {
-    quantity = purchaseQuantity.value
-    pricePerToken = await contract.methods.startingPrice().call();
-    let resp = await contract.methods.purchaseToken(quantity).send(
-        {
-            from: address,
-            to: contractAddress,
-            value: quantity * pricePerToken,
-        }
-    )
-    console.log(resp)
-    updateRemainingSupply();
-    let purchaseResult = this.document.getElementById("purchase-result");
-    if (resp.status) {
-      purchaseResult.innerHTML = `Successfully purchased ${quantity} token(s)!`;
-    } else {
-      purchaseResult.innerHTML = 'Purchase failed';
-    }
+  quantity = purchaseQuantity.value
+  pricePerToken = await contract.methods.startingPrice().call();
+  let resp = await contract.methods.purchaseToken(quantity).send(
+      {
+          from: address,
+          to: contractAddress,
+          value: quantity * pricePerToken,
+      }
+  )
+  console.log(resp)
+  updateRemainingSupply();
+  let purchaseResult = this.document.getElementById("purchase-result");
+  if (resp.status) {
+    purchaseResult.innerHTML = `Successfully purchased ${quantity} token(s)!`;
+  } else {
+    purchaseResult.innerHTML = 'Purchase failed';
+  }
 }
 
+withdrawButton.onclick = async() => {
+  let withdrawResult = this.document.getElementById("withdraw-result");
+  try {
+    let resp = await contract.methods.withdraw().call();
+    withdrawResult.innerHTML = `Successfully withdrew funds!`;
+    console.log(resp);
+  } catch(err) {
+    withdrawResult.innerHTML = 'Withdrawal failed';
+  }
+}
 
 async function updateRemainingSupply() {
     remaining = await contract.methods.balanceOf(contractAddress).call();

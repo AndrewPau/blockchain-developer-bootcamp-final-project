@@ -8,7 +8,7 @@ const purchaseButton = this.document.getElementById("purchase-token");
 const purchaseQuantity = this.document.getElementById("purchase-quantity");
 const withdrawButton = this.document.getElementById("withdraw-funds");
 
-// TODO: Toggle address if testing locally
+// TODO: Toggle address if not testing on Ropsten
 var contractAddress = '0xc617C0EA609f5cbFFdDeCdB983B834E47DD83159';
 var abi = [
   {
